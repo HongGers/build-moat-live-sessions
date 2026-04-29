@@ -17,13 +17,40 @@ Answer these before you start coding:
 
 1. **Static vs Dynamic QR Code:** Why does this system use dynamic QR codes (encode short URL) instead of static (encode original URL directly)? When would you choose static instead?
 
+```
+When we use a dynamic QR code, the user first visit our service (shortened URL) before redirected to the original URL. This let us be able to track and calculate the statistic. But the trade-off is longer response time due to redirection. If we intent to provide an simple, quick service for QR code generation, we can use static URL because we don't need to track and generate statistic. This makes the user see the original URL faster.
+```
+
 2. **Token Generation:** How will you generate short URL tokens? What happens when two different URLs produce the same token? How does collision probability change as the number of tokens grows?
+
+```
+I think we can use hash function to generate URL token. The QR token is regarded as QR code unique id, so when there're different URLs matching a same token, we might get unexpected result. For example, trying to get/update/delete URL A but receive URL B. As the total amount of tokens grows, the collision probability become higher. The way to prevent from collision, we can hash a combined key such as `(user_id, url, timestamp)` so that the collision probability would be minimized.
+```
 
 3. **Redirect Strategy:** Why 302 (temporary) instead of 301 (permanent)? What are the trade-offs for analytics, URL modification, and latency?
 
+```
+When we choose 301 (permanent), browser would cache this mapping. This makes the client only hit our shortened URL at first time. Which made us lost our real tracking data because browser would directly goes to original URL in the later calls. This also cause a URL modification failed because we're unable to tell client browser to clear their cache. So even if we modified the original URL, the client still browse to old URL in their cache.
+
+While 302 would visit shortened URL -redirect-> original URL at every visit. This cause a longer latency but solve the problems above.
+```
+
 4. **URL Normalization:** What normalization rules do you need? Why is `http://Example.com/` and `https://example.com` potentially the same URL?
 
+```
+We might need following rules:
+- remove unnecessary trailing slash
+- lowercase the hostname because the domain name is case-insensitive
+- remove default port (:80 for HTTP / :443 for HTTPs)
+
+and we should note that the same URL starts with `http://` and `https://` might be different site. So we can't treat them as same.
+```
+
 5. **Error Semantics:** What should happen when someone scans a deleted link vs a non-existent link? Should the HTTP status codes be different?
+
+```
+In my opinion, we should send 204 for deleted link, telling the client that this URL do exist, but deleted. And should return 404 for non-existent link. So that the client knows what happened easily and clearly.
+```
 
 ## Verification
 
