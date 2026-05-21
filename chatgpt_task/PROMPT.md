@@ -22,14 +22,32 @@ User → MCP Tool Call → Job Scheduler API → DB
 Answer these before you start coding:
 
 1. **Watcher vs Cron:** Why separate the watcher from the worker? What problems does a single cron job that both scans and executes have?
+```
+- single cron job worker means SPOF. if the worker failover, whole system stuck and lost all scheduled tasks.
+- if we have long-running task. all scannings need to wait for execution finished.
+```
 
 2. **Queue Layer:** Why put a queue between the watcher and worker instead of having the watcher call the worker directly? What are the benefits?
+```
+- make the traffic smoother. avoid sudden traffic spike.
+- use tool like kafka to make the queued job persistent.
+```
 
 3. **Time Bucket Partitioning:** Instead of `SELECT * WHERE scheduled_at <= now()`, why partition jobs by time bucket (e.g., hour)? What happens to query performance at 1M+ jobs without partitioning?
+```
+- without partitioning, the table might becomes very large. even we have index, O(logN) might still cause latency.
+```
 
 4. **Tool Naming:** Why `task.create` instead of `createTask`? How does naming convention affect LLM tool selection accuracy?
+```
+- resource + verb convention makes LLM explore tools more efficiently and use tool more precise.
+- seperating resource and verb makes also makes tools human-readable and maintainable.
+```
 
 5. **Registry vs If-Else:** Why use a dictionary registry to route tool calls instead of if-else chains? What happens when you need to add the 20th tool?
+```
+- use a dictionary registry makes code more readable and scalable. when we need to add 20th tool, registry make the code well-structured and easy to add new tool or logic.
+```
 
 ## Verification
 
